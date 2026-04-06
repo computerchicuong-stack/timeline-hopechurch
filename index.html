@@ -2,107 +2,88 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Timeline Hội Thánh Hy Vọng</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         :root { --primary-color: #2c3e50; --accent-color: #e74c3c; --bg-color: #f4f7f6; --timeline-color: #3498db; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--bg-color); padding: 10px; line-height: 1.5; }
-        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--bg-color); padding: 10px; line-height: 1.5; margin: 0; }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 15px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
         
         .header-info { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
-        .info-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .info-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
         .input-box label { font-weight: bold; font-size: 13px; color: #666; display: block; margin-bottom: 5px; }
 
-        .timeline-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid #ddd; border-radius: 10px; overflow: hidden; margin-bottom: 20px;}
+        /* Tối ưu bảng cho Mobile */
+        .timeline-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 20px; }
         .timeline-table th { background: var(--primary-color); color: #fff; padding: 12px; font-size: 14px; }
-        .timeline-table td { border-bottom: 1px solid #eee; padding: 8px; }
-        .drag-handle { cursor: grab; color: #ccc; font-size: 20px; text-align: center; }
-
-        input, textarea { width: 100%; border: 1px solid #ddd; border-radius: 4px; padding: 8px; box-sizing: border-box; font-size: 14px; }
-        textarea { height: 38px; resize: none; }
-
-        .action-bar { margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap; }
-        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: #fff; transition: 0.2s; }
-        .btn-add { background: #16a085; }
-        .btn-publish { background: #27ae60; flex: 2; }
-        .btn-image { background: #e67e22; flex: 1; }
-        .btn-copy { background: #2980b9; flex: 1; }
-        .btn-del { background: #e74c3c; padding: 5px 10px; font-size: 12px; }
-
-        #captureArea { padding: 40px; background: #fff; border: 1px solid #eee; margin-top: 30px; display: none; overflow-x: auto; }
         
-        .visual-timeline { 
-            display: flex; 
-            position: relative; 
-            padding: 40px 0; 
-            margin-top: 20px;
-            min-width: min-content;
+        @media (max-width: 768px) {
+            .timeline-table thead { display: none; } /* Ẩn tiêu đề bảng trên mobile */
+            .info-inputs { grid-template-columns: 1fr; } /* Dàn hàng dọc cho ngày/chủ đề */
+            
+            .item-row { 
+                display: block; 
+                border: 1px solid #ddd; 
+                border-radius: 10px; 
+                margin-bottom: 15px; 
+                padding: 10px; 
+                background: #fdfdfd;
+                position: relative;
+            }
+            .item-row td { 
+                display: block; 
+                width: 100% !important; 
+                border: none; 
+                padding: 5px 0; 
+                text-align: left !important;
+            }
+            /* Thêm nhãn giả cho từng ô nhập liệu trên mobile */
+            .item-row td:nth-child(2)::before { content: "Giờ:"; font-weight: bold; font-size: 11px; color: #999; display: block; }
+            .item-row td:nth-child(3)::before { content: "Nội dung:"; font-weight: bold; font-size: 11px; color: #999; display: block; }
+            .item-row td:nth-child(4)::before { content: "Chi tiết:"; font-weight: bold; font-size: 11px; color: #999; display: block; }
+            .item-row td:nth-child(5)::before { content: "Phụ trách:"; font-weight: bold; font-size: 11px; color: #999; display: block; }
+            
+            .btn-del { position: absolute; top: 10px; right: 10px; }
+            .drag-handle { float: left; margin-right: 10px; }
         }
 
-        .visual-timeline::before { 
-            content: ''; 
-            position: absolute; 
-            left: 50px; 
-            right: 50px; 
-            top: 67px; 
-            height: 4px; 
-            background: var(--timeline-color); 
-            border-radius: 2px;
-            z-index: 1;
-        }
+        /* Tăng kích thước input cho ngón tay dễ bấm (16px để ko bị zoom trên iPhone) */
+        input, textarea { width: 100%; border: 1px solid #ddd; border-radius: 6px; padding: 10px; box-sizing: border-box; font-size: 16px; }
+        textarea { min-height: 45px; resize: vertical; }
 
-        .v-item { 
-            position: relative; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            width: 250px; 
-            flex-shrink: 0;
-            z-index: 2;
-        }
+        .action-bar { margin: 15px 0; display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: #fff; transition: 0.2s; font-size: 14px; }
+        .btn-add { background: #16a085; width: 100%; margin-bottom: 10px; }
+        .btn-publish { background: #27ae60; flex: 2; min-width: 200px; }
+        .btn-image { background: #e67e22; flex: 1; min-width: 140px; }
+        .btn-copy { background: #2980b9; flex: 1; min-width: 140px; }
+        .btn-del { background: #e74c3c; padding: 8px 12px; }
 
-        .v-time { 
-            font-weight: bold; 
-            color: var(--timeline-color); 
-            font-size: 16px; 
-            margin-bottom: 10px;
-            height: 25px;
-        }
+        /* Vùng xem trước có thể cuộn ngang */
+        #captureArea { padding: 20px; background: #fff; border: 1px solid #eee; margin-top: 20px; display: none; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        
+        .visual-timeline { display: flex; position: relative; padding: 40px 0; margin-top: 20px; min-width: min-content; }
+        .visual-timeline::before { content: ''; position: absolute; left: 50px; right: 50px; top: 67px; height: 4px; background: var(--timeline-color); z-index: 1; }
 
-        .v-dot { 
-            width: 14px; 
-            height: 14px; 
-            background: #fff; 
-            border: 4px solid var(--timeline-color); 
-            border-radius: 50%; 
-            margin-bottom: 20px;
-            box-shadow: 0 0 0 4px #fff; 
-        }
-
-        .v-card { 
-            background: #fdfdfd; 
-            padding: 15px; 
-            border-radius: 10px; 
-            border-top: 5px solid var(--primary-color); 
-            width: 88%;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
+        .v-item { position: relative; display: flex; flex-direction: column; align-items: center; width: 250px; flex-shrink: 0; z-index: 2; }
+        .v-time { font-weight: bold; color: var(--timeline-color); font-size: 16px; margin-bottom: 10px; }
+        .v-dot { width: 14px; height: 14px; background: #fff; border: 4px solid var(--timeline-color); border-radius: 50%; margin-bottom: 20px; box-shadow: 0 0 0 4px #fff; }
+        .v-card { background: #fdfdfd; padding: 15px; border-radius: 10px; border-top: 5px solid var(--primary-color); width: 88%; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
 
         .v-content { font-weight: bold; font-size: 16px; color: var(--primary-color); display: block; margin-bottom: 5px;}
         .v-detail { font-size: 14px; color: #555; white-space: pre-line; display: block; line-height: 1.4;}
         .v-lead { font-size: 13px; color: #7f8c8d; margin-top: 10px; font-style: italic; border-top: 1px solid #eee; padding-top: 8px; display: block;}
 
-        #zaloOutput { width: 100%; height: 150px; margin-top: 20px; display: none; background: #fdfdfd; border: 1px dashed #ccc; padding: 10px; font-family: monospace; }
+        #zaloOutput { width: 100%; height: 120px; margin-top: 15px; display: none; background: #f9f9f9; border: 1px dashed #ccc; padding: 10px; font-size: 13px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header-info">
-        <input type="text" id="title" oninput="saveData()" style="text-align:center; font-size: 24px; font-weight: bold; color: #e74c3c; border:none; background:transparent; width: 100%;" value="CHƯƠNG TRÌNH LỄ THỜ PHƯỢNG">
+        <input type="text" id="title" oninput="saveData()" style="text-align:center; font-size: 20px; font-weight: bold; color: #e74c3c; border:none; background:transparent; width: 100%;" value="CHƯƠNG TRÌNH LỄ THỜ PHƯỢNG">
         <div class="info-inputs">
             <div class="input-box">
                 <label>📅 Ngày Chúa Nhật:</label>
@@ -115,9 +96,7 @@
         </div>
     </div>
 
-    <div class="action-bar">
-        <button class="btn btn-add" onclick="addNewSection()">➕ Thêm Dòng</button>
-    </div>
+    <button class="btn btn-add" onclick="addNewSection()">➕ Thêm Dòng Mới</button>
 
     <table class="timeline-table">
         <thead>
@@ -134,22 +113,22 @@
     </table>
 
     <div class="action-bar">
-        <button class="btn btn-publish" onclick="generateVisual()">🚀 XUẤT BẢN NỘI DUNG</button>
-        <button class="btn btn-copy" onclick="copyZalo()">📎 COPY ZALO</button>
-        <button class="btn btn-image" onclick="exportToImage()">🖼️ LƯU ẢNH GỬI ZALO</button>
+        <button class="btn btn-publish" onclick="generateVisual()">🚀 XUẤT BẢN</button>
+        <button class="btn btn-copy" onclick="copyZalo()">📎 COPY TEXT</button>
+        <button class="btn btn-image" onclick="exportToImage()">🖼️ LƯU ẢNH</button>
     </div>
 
     <textarea id="zaloOutput" readonly placeholder="Nội dung Zalo sẽ hiện ở đây..."></textarea>
 
     <div id="captureArea">
         <div style="text-align: center; margin-bottom: 10px;">
-            <h1 id="v-title-h" style="color: #e74c3c; margin:0; text-transform: uppercase; font-size: 28px;"></h1>
-            <h3 id="v-date-h" style="margin: 5px 0; color: #555;"></h3>
-            <p id="v-topic-h" style="font-size: 18px; color: #2c3e50; font-weight: bold;"></p>
-            <div style="width: 60px; height: 3px; background: var(--timeline-color); margin: 10px auto;"></div>
+            <h1 id="v-title-h" style="color: #e74c3c; margin:0; text-transform: uppercase; font-size: 24px;"></h1>
+            <h3 id="v-date-h" style="margin: 5px 0; color: #555; font-size: 16px;"></h3>
+            <p id="v-topic-h" style="font-size: 16px; color: #2c3e50; font-weight: bold;"></p>
+            <div style="width: 50px; height: 3px; background: var(--timeline-color); margin: 10px auto;"></div>
         </div>
         <div class="visual-timeline" id="visualList"></div>
-        <p style="text-align: center; color: #95a5a6; font-size: 13px; margin-top: 30px; font-style: italic;">🙏 Kính mời các ban ngành xem lịch phối hợp chuẩn bị!</p>
+        <p style="text-align: center; color: #95a5a6; font-size: 12px; margin-top: 25px; font-style: italic;">🙏 Kính mời các ban ngành xem lịch phối hợp chuẩn bị!</p>
     </div>
 </div>
 
@@ -157,6 +136,7 @@
     const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV"];
     const STORAGE_KEY = 'church_timeline_standard_v3';
 
+    // Dữ liệu mẫu (Giữ nguyên như bạn cung cấp)
     const defaultData = [
         { time: "15:30", content: "Mở nhạc xây ngai", detail: "Nhạc không lời nhẹ nhàng", lead: "Ban Media" },
         { time: "15:45", content: "Tắt nhạc", detail: "Cầu nguyện dọn lòng, xây ngai\n- Cha yêu thương", lead: "Ban thờ phượng" },
@@ -177,10 +157,10 @@
         const savedData = localStorage.getItem(STORAGE_KEY);
         if (savedData) {
             const parsed = JSON.parse(savedData);
-            document.getElementById('title').value = parsed.title;
-            document.getElementById('ngayNhom').value = parsed.date;
-            document.getElementById('chuDe').value = parsed.topic;
-            parsed.items.forEach(item => list.appendChild(createRow(item.time, item.content, item.detail, item.lead)));
+            document.getElementById('title').value = parsed.title || "CHƯƠNG TRÌNH LỄ THỜ PHƯỢNG";
+            document.getElementById('ngayNhom').value = parsed.date || "";
+            document.getElementById('chuDe').value = parsed.topic || "";
+            if (parsed.items) parsed.items.forEach(item => list.appendChild(createRow(item.time, item.content, item.detail, item.lead)));
         } else {
             document.getElementById('ngayNhom').valueAsDate = new Date();
             defaultData.forEach(item => list.appendChild(createRow(item.time, item.content, item.detail, item.lead)));
@@ -194,11 +174,11 @@
         tr.className = "item-row";
         tr.innerHTML = `
             <td><div class="drag-handle">☰</div></td>
-            <td><input type="text" class="t-time" value="${time}" oninput="saveData()"></td>
-            <td><textarea class="t-content" oninput="saveData()">${content}</textarea></td>
-            <td><textarea class="t-detail" oninput="saveData()">${detail}</textarea></td>
-            <td><textarea class="t-lead" oninput="saveData()">${lead}</textarea></td>
-            <td style="text-align:center"><button class="btn btn-del" onclick="this.closest('tr').remove(); saveData();">X</button></td>
+            <td><input type="text" class="t-time" value="${time}" oninput="saveData()" placeholder="Giờ"></td>
+            <td><textarea class="t-content" oninput="saveData()" placeholder="Nội dung">${content}</textarea></td>
+            <td><textarea class="t-detail" oninput="saveData()" placeholder="Chi tiết">${detail}</textarea></td>
+            <td><textarea class="t-lead" oninput="saveData()" placeholder="Phụ trách">${lead}</textarea></td>
+            <td style="text-align:center"><button class="btn btn-del" onclick="if(confirm('Xóa dòng này?')){this.closest('tr').remove(); saveData();}">✕</button></td>
         `;
         return tr;
     }
@@ -228,7 +208,7 @@
         const title = document.getElementById('title').value;
         const ngay = document.getElementById('ngayNhom').value;
         const topic = document.getElementById('chuDe').value.trim();
-        let dateStr = ngay ? new Date(ngay).toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'numeric' }) : "";
+        let dateStr = ngay ? new Date(ngay).toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric' }) : "";
 
         document.getElementById('v-title-h').innerText = title;
         document.getElementById('v-date-h').innerText = dateStr;
@@ -250,7 +230,6 @@
 
             if (content !== "") {
                 const roman = romanNumerals[activeIdx] || (activeIdx + 1);
-
                 visualList.innerHTML += `
                     <div class="v-item">
                         <div class="v-time">${time || '--:--'}</div>
@@ -260,8 +239,7 @@
                             ${detail ? '<span class="v-detail">' + detail + '</span>' : ''}
                             ${lead ? '<span class="v-lead">👤 ' + lead + '</span>' : ''}
                         </div>
-                    </div>
-                `;
+                    </div>`;
 
                 zaloText += `${roman}. 🕒 ${time} | ${content}\n`;
                 if(detail) zaloText += `   📖 Chi tiết: ${detail}\n`;
@@ -270,23 +248,21 @@
             }
         });
 
-        zaloText += `🙏 Kính mời các ban ngành phối hợp chuẩn bị!`;
+        zaloText += `🙏 Kính mời các ban ngành phối hợp!`;
         document.getElementById('zaloOutput').value = zaloText;
         document.getElementById('zaloOutput').style.display = 'block';
         document.getElementById('captureArea').style.display = 'block';
+        window.scrollTo(0, document.body.scrollHeight);
     }
 
     async function exportToImage() {
         const area = document.getElementById('captureArea');
-        if(area.style.display === 'none') {
-            alert("Vui lòng nhấn 'XUẤT BẢN' trước!");
-            return;
-        }
-
+        if(area.style.display === 'none') return alert("Hãy nhấn 'XUẤT BẢN' trước!");
+        
         const btn = document.querySelector('.btn-image');
-        btn.innerText = "Đang xử lý...";
+        const originalText = btn.innerText;
+        btn.innerText = "⌛ Đang xử lý...";
 
-        // Cập nhật quan trọng: Tạm thời mở rộng chiều rộng của captureArea để chụp full trục X
         const originalStyle = area.style.cssText;
         area.style.display = 'block';
         area.style.overflow = 'visible';
@@ -298,31 +274,26 @@
                 useCORS: true, 
                 backgroundColor: "#ffffff",
                 width: area.scrollWidth,
-                height: area.scrollHeight,
                 windowWidth: area.scrollWidth
             });
-
             const link = document.createElement('a');
-            link.download = `Timeline-Church-${new Date().getTime()}.png`;
+            link.download = `Timeline-${new Date().getTime()}.png`;
             link.href = canvas.toDataURL("image/png");
             link.click();
-        } catch (err) {
-            console.error("Lỗi xuất ảnh:", err);
-            alert("Không thể xuất ảnh, hãy thử lại.");
-        } finally {
-            // Trả lại định dạng ban đầu
+        } catch (e) { alert("Lỗi xuất ảnh!"); } 
+        finally {
             area.style.cssText = originalStyle;
-            area.style.display = 'block'; // Đảm bảo vẫn hiển thị sau khi chụp
-            btn.innerText = "🖼️ LƯU ẢNH GỬI ZALO";
+            area.style.display = 'block';
+            btn.innerText = originalText;
         }
     }
 
     function copyZalo() {
         const output = document.getElementById('zaloOutput');
-        if (!output.value) return alert("Vui lòng nhấn 'Xuất bản' trước!");
+        if (!output.value) return alert("Chưa có nội dung!");
         output.select();
         navigator.clipboard.writeText(output.value);
-        alert("Đã copy!");
+        alert("Đã copy văn bản!");
     }
 
     window.onload = init;
